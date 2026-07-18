@@ -86,7 +86,7 @@
             categories.forEach(cat => {
                 const row = document.createElement('div');
                 row.className = "matrix-row";
-                row.innerHTML = `<div class="flex items-center justify-center font-bold text-[12px] text-slate-700 bg-slate-100 rounded">${cat}</div>`;
+                row.innerHTML = `<div class="flex items-center justify-center font-bold text-[15px] text-slate-700 bg-slate-100 rounded">${cat}</div>`;
                 sizes.forEach(size => {
                     const item = menuData.find(m => m.kategori === cat && m.isi === size);
                     const qty = cart.find(c => c.id === item.id)?.qty || 0;
@@ -97,7 +97,7 @@
                         if(existing) existing.qty++; else cart.push({...item, qty: 1});
                         update();
                     };
-                    btn.innerHTML = `<span class="font-black text-[12px] ${qty > 0 ? 'text-pink-700' : 'text-slate-700'}">${formatRupiah(item.harga)}</span>
+                    btn.innerHTML = `<span class="font-black text-[15px] ${qty > 0 ? 'text-pink-700' : 'text-slate-700'}">${formatRupiah(item.harga)}</span>
                                      ${qty > 0 ? `<span class="text-[9px] font-bold text-pink-600">x${qty}</span>` : ''}`;
                     row.appendChild(btn);
                 });
