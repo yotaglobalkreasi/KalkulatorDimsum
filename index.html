@@ -185,25 +185,65 @@
             
             <div class="flex-1 overflow-y-auto p-3 space-y-3 custom-scroll">
                 <div class="bg-pink-50 border border-pink-100 p-2.5 rounded-lg flex justify-between items-center">
+
                     <div>
                         <span class="text-[8px] font-bold text-pink-500 uppercase">Total Tagihan</span>
                         <p class="text-lg font-black text-pink-600" id="pay-total-bill">Rp 0</p>
                     </div>
-                    <span class="text-[9px] bg-pink-200/50 text-pink-700 font-extrabold px-1.5 py-0.5 rounded">Tunai / Cash</span>
+                    <span class="text-[9px] bg-pink-200/50 text-pink-700 font-extrabold px-1.5 py-0.5 rounded" id="payment-title">Tunai / Cash</span>
+                </div>
+
+                <div class="space-y-2 mt-3">
+
+                    <label class="text-[9px] font-bold text-slate-400 uppercase">
+                        Metode Pembayaran
+                    </label>
+
+                    <div class="grid grid-cols-2 gap-2">
+
+                        <button
+                            id="btn-tunai"
+                            onclick="selectPayment('Tunai')"
+                            class="bg-pink-600 text-white py-2 rounded-lg font-bold">
+
+                            💵 Tunai
+
+                        </button>
+
+                        <button
+                            id="btn-qris"
+                            onclick="selectPayment('QRIS')"
+                            class="bg-slate-100 py-2 rounded-lg font-bold">
+
+                            📱 QRIS
+
+                        </button>
+
+                    </div>
+
                 </div>
 
                 <div class="space-y-1">
-                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Uang yang Diterima</label>
-                    <div class="relative">
-                        <span class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-sm font-bold text-slate-400">Rp</span>
-                        <input type="number" id="cash-input" oninput="calculateChange()" placeholder="Masukkan nominal..." class="w-full pl-8 pr-2.5 py-2 bg-slate-50 border border-slate-200 focus:border-pink-500 rounded-lg font-bold text-sm text-slate-800 outline-none transition-colors">
+                    <div id="cash-section">
+
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                        Uang yang Diterima</label>
+                        <div class="relative">
+                            <span class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-sm font-bold text-slate-400">Rp</span>
+                            <input type="number" id="cash-input" oninput="calculateChange()" placeholder="Masukkan nominal..." class="w-full pl-8 pr-2.5 py-2 bg-slate-50 border border-slate-200 focus:border-pink-500 rounded-lg font-bold text-sm text-slate-800 outline-none transition-colors">
+                        </div>
                     </div>
                 </div>
 
-                <div class="space-y-1">
-                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Pilihan Uang Cepat</p>
+                <div id="quick-cash-section" class="space-y-1">
+
+                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">
+                        Pilihan Uang Cepat
+                    </p>
+
                     <div id="quick-cash-container" class="grid grid-cols-3 gap-1">
                     </div>
+
                 </div>
 
                 <div id="change-card" class="bg-slate-50 border border-slate-150 p-2.5 rounded-lg flex justify-between items-center">
@@ -311,6 +351,7 @@
     let cart = [];
     let transactionHistory = [];
     let sheetsWebhookUrl = "";
+    let paymentMethod = "Tunai";
 
     function showCustomDialog(title, message, options = []) {
         return new Promise((resolve) => {
@@ -499,6 +540,8 @@
 
     function openPaymentModal() {
         const total = cart.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+        paymentMethod = "Tunai";
+        selectPayment("Tunai");
         document.getElementById('pay-total-bill').innerText = formatRupiah(total);
         document.getElementById('cash-input').value = '';
         document.getElementById('pay-change').innerText = formatRupiah(0);
@@ -537,14 +580,63 @@
 
     function closePaymentModal() { document.getElementById('payment-modal').classList.add('hidden'); }
 
+    function selectPayment(method){
+        document.getElementById("payment-title").innerText =
+            method === "Tunai" ? "Tunai / Cash" : "QRIS";
+
+        paymentMethod = method;
+
+        document.getElementById("btn-tunai").className =
+            method=="Tunai"
+            ? "bg-pink-600 text-white py-2 rounded-lg font-bold"
+            : "bg-slate-100 py-2 rounded-lg font-bold";
+
+        document.getElementById("btn-qris").className =
+            method=="QRIS"
+            ? "bg-pink-600 text-white py-2 rounded-lg font-bold"
+            : "bg-slate-100 py-2 rounded-lg font-bold";
+
+        document.getElementById("cash-section").style.display =
+            method=="Tunai"
+            ? "block"
+            : "none";
+
+        document.getElementById("quick-cash-section").style.display =
+            method=="Tunai"
+            ? "block"
+            : "none";
+
+        calculateChange();
+        }
+
+    
     function calculateChange() {
+        const btnSave = document.getElementById('btn-complete-transaction');
+
+            if (paymentMethod === "QRIS") {
+
+                document.getElementById('change-card-title').innerText = "STATUS";
+
+                document.getElementById('pay-change').innerText = "LUNAS";
+
+                document.getElementById('change-status').innerText = "QRIS";
+
+                document.getElementById('change-status').className =
+                    "text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-700";
+
+                btnSave.disabled = false;
+
+                btnSave.className =
+                    "w-full py-2.5 bg-emerald-500 text-white font-extrabold rounded-lg text-xs shadow-md active:scale-95 transition-all text-center flex items-center justify-center space-x-2";
+
+                return;
+            }
         const total = cart.reduce((sum, item) => sum + (item.harga * item.qty), 0);
         let received = parseFloat(document.getElementById('cash-input').value) || 0;
         const change = received - total;
         const changeEl = document.getElementById('pay-change');
         const changeCard = document.getElementById('change-card');
         const changeStatus = document.getElementById('change-status');
-        const btnSave = document.getElementById('btn-complete-transaction');
 
         if (received === 0) {
             changeEl.innerText = formatRupiah(0);
@@ -572,7 +664,7 @@
         const itemsList = transaction.items.map(item => item.qty + "x " + item.nama + " (isi " + item.isi + ")").join(", ");
         const payload = {
             id: "STRUK-" + transaction.id, timestamp: transaction.fullDateString,
-            items: itemsList, total: transaction.total, received: transaction.received, change: transaction.change
+            items: itemsList, total: transaction.total, received: transaction.received, change: transaction.change, paymentMethod: transaction.paymentMethod
         };
         try {
             await fetch(sheetsWebhookUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -583,14 +675,20 @@
     async function processCheckout() {
         if (cart.length === 0) return;
         const total = cart.reduce((sum, item) => sum + (item.harga * item.qty), 0);
-        const received = parseFloat(document.getElementById('cash-input').value) || total;
+        const received = paymentMethod === "QRIS"
+            ? total
+            : (parseFloat(document.getElementById('cash-input').value) || total);
+
+        const change = paymentMethod === "QRIS"
+            ? 0
+            : received - total;
         const timestamp = new Date();
         const timeStr = timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
         const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
         
         const newTransaction = {
-            id: Date.now(), time: timeStr, fullDateString: timestamp.toLocaleDateString('id-ID', dateOptions),
-            items: [...cart], total: total, received: received, change: received - total
+            id: Date.now(), paymentMethod:paymentMethod, time: timeStr, fullDateString: timestamp.toLocaleDateString('id-ID', dateOptions),
+            items: [...cart], total: total, received: received, change,
         };
 
         transactionHistory.unshift(newTransaction);
@@ -632,7 +730,7 @@
                 let itemRowsHtml = '';
                 trx.items.forEach(item => { itemRowsHtml += "<div class=\"flex justify-between text-slate-600\"><span>" + item.qty + " &times; " + item.nama + " (Isi " + item.isi + ")</span><span class=\"font-medium\">" + formatRupiah(item.harga * item.qty) + "</span></div>"; });
 
-                card.innerHTML = "<div class=\"flex justify-between items-center border-b border-dashed border-slate-200 pb-1\"><span class=\"font-bold text-pink-600\">STRUK #" + (transactionHistory.length - index) + "</span><span class=\"text-slate-400 text-[8px]\">" + trx.time + "</span></div><div class=\"space-y-0.5\">" + itemRowsHtml + "</div><div class=\"border-t border-slate-100 pt-1 flex justify-between font-extrabold text-slate-800\"><span>Total Bayar:</span><span class=\"text-pink-600\">" + formatRupiah(trx.total) + "</span></div><div class=\"flex justify-between text-[8px] text-slate-400 pt-0.5\"><span>Tunai: " + formatRupiah(trx.received) + "</span><span>Kembali: " + formatRupiah(trx.change) + "</span></div>";
+                card.innerHTML = "<div class=\"flex justify-between items-center border-b border-dashed border-slate-200 pb-1\"><span class=\"font-bold text-pink-600\">STRUK #" + (transactionHistory.length - index) + "</span><span class=\"text-slate-400 text-[8px]\">" + trx.time + "</span></div><div class=\"space-y-0.5\">" + itemRowsHtml + "</div><div class=\"border-t border-slate-100 pt-1 flex justify-between font-extrabold text-slate-800\"><span>Total Bayar:</span><span class=\"text-pink-600\">" + formatRupiah(trx.total) + "</span></div><div class=\"flex justify-between text-[8px] text-slate-400 pt-0.5\"><span>" + (trx.paymentMethod || "Tunai") + "</span><span>Kembali: " + formatRupiah(trx.change) + "</span></div>";
                 listContainer.appendChild(card);
             });
         }
@@ -650,7 +748,7 @@
         let csvContent = "data:text/csv;charset=utf-8,No,Tanggal & Waktu,ID Struk,Item Terjual,Total Tagihan,Tunai Diterima,Kembalian\n";
         transactionHistory.forEach((trx, i) => {
             const itemsDesc = trx.items.map(item => item.qty + "x " + item.nama + " (" + item.isi + ")").join(" | ");
-            csvContent += (transactionHistory.length - i) + ",\"" + trx.fullDateString + "\",\"STRUK-\t" + trx.id + "\",\"" + itemsDesc + "\"," + trx.total + "," + trx.received + "," + trx.change + "\n";
+            csvContent += (transactionHistory.length - i) + ",\"" + trx.fullDateString + "\",\"STRUK-\t" + trx.id + "\",\"" + (trx.paymentMethod || "Tunai") + "\",\"" + itemsDesc + "\"," + trx.total + "," + trx.received + "," + trx.change + "\n";
         });
         const link = document.createElement("a");
         link.setAttribute("href", encodeURI(csvContent));
